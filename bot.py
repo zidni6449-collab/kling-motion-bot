@@ -126,7 +126,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "1️⃣ Klik *Order Video*\n"
             "2️⃣ Pilih jumlah video\n"
             "3️⃣ Kirim *foto* yang mau dijadikan video\n"
-            "4️⃣ Kirim *audio/musik* (opsional)\n"
+            "4️⃣ Kirim *referensi video/audio* sebagai backsound (opsional)\n"
             "5️⃣ Transfer ke DANA kami\n"
             "6️⃣ Kirim *bukti bayar*\n"
             "7️⃣ Tunggu video selesai\n"
@@ -193,10 +193,10 @@ async def terima_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["foto_id"] = update.message.photo[-1].file_id
         text = (
             "✅ *Foto diterima!*\n\n"
-            "🎵 Kirim *audio/musik* untuk videonya\n"
-            "_atau klik Skip jika tidak pakai musik_"
+            "🎵 Kirim *referensi video/audio* sebagai backsound\n"
+            "_atau klik Skip jika tidak mau pakai backsound_"
         )
-        keyboard = [[InlineKeyboardButton("⏭ Skip (tanpa musik)", callback_data="skip_audio")]]
+        keyboard = [[InlineKeyboardButton("⏭ Skip (tanpa backsound)", callback_data="skip_audio")]]
         await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         return UPLOAD_AUDIO
     else:
