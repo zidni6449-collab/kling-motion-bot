@@ -51,11 +51,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("❓ Cara Order", callback_data="cara")],
         [InlineKeyboardButton("📞 Hubungi Admin", url="https://t.me/sedang_mengetik_sekarang")],
     ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     bottom_keyboard = ReplyKeyboardMarkup(
         [[KeyboardButton("🚀 Start"), KeyboardButton("💰 Pricing"), KeyboardButton("👤 Akun")]],
-        resize_keyboard=True, persistent=True
+        resize_keyboard=True
     )
-    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
     await update.message.reply_text("Gunakan tombol di bawah untuk navigasi cepat! 👇", reply_markup=bottom_keyboard)
     return MENU
 
