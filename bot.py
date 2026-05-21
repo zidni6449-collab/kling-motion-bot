@@ -388,8 +388,12 @@ def main():
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
+        allow_reentry=True,
         states={
-            MENU: [CallbackQueryHandler(button_handler)],
+            MENU: [
+                CallbackQueryHandler(button_handler),
+                MessageHandler(filters.PHOTO, lambda u, c: u.message.reply_text("Klik *Order Video* dulu ya! 👇", parse_mode='Markdown')),
+            ],
             PILIH_JUMLAH: [CallbackQueryHandler(button_handler)],
             UPLOAD_FOTO: [
                 MessageHandler(filters.PHOTO, terima_foto),
