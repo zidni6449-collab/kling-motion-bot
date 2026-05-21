@@ -54,7 +54,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     bottom_keyboard = ReplyKeyboardMarkup(
         [[KeyboardButton("🚀 Start"), KeyboardButton("💰 Pricing"), KeyboardButton("👤 Akun")]],
-        resize_keyboard=True
+        resize_keyboard=True, is_persistent=True
     )
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
     await update.message.reply_text("Gunakan tombol di bawah untuk navigasi cepat! 👇", reply_markup=bottom_keyboard)
