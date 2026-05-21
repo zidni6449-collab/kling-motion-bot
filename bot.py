@@ -204,7 +204,9 @@ async def terima_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return UPLOAD_FOTO
 
 async def terima_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.audio:
+    if update.message.video:
+        context.user_data["audio_id"] = update.message.video.file_id
+    elif update.message.audio:
         context.user_data["audio_id"] = update.message.audio.file_id
     elif update.message.voice:
         context.user_data["audio_id"] = update.message.voice.file_id
@@ -280,7 +282,10 @@ async def terima_bukti_bayar(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if foto_id:
         await context.bot.send_photo(chat_id=ADMIN_ID, photo=foto_id, caption=f"📸 Foto untuk Order #{order_id}")
     if audio_id:
-        await context.bot.send_document(chat_id=ADMIN_ID, document=audio_id, caption=f"🎵 Audio untuk Order #{order_id}")
+        try:
+            await context.bot.send_video(chat_id=ADMIN_ID, video=audio_id, caption=f"🎵 Referensi untuk Order #{order_id}")
+        except Exception:
+            await context.bot.send_document(chat_id=ADMIN_ID, document=audio_id, caption=f"🎵 Referensi untuk Order #{order_id}")
 
     context.user_data.clear()
     return MENU
@@ -342,7 +347,7 @@ def main():
                 CallbackQueryHandler(button_handler),
             ],
             UPLOAD_AUDIO: [
-                MessageHandler(filters.AUDIO | filters.VOICE | filters.Document.ALL, terima_audio),
+                MessageHandler(filters.AUDIO | filters.VOICE | filters.VIDEO | filters.Document.ALL, terima_audio),
                 CallbackQueryHandler(button_handler),
             ],
             TUNGGU_BAYAR: [
