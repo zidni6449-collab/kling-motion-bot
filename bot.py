@@ -341,28 +341,17 @@ async def kirim_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def pricing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
-        "💰 *Daftar Harga*
-
-"
-        "🎬 1 video = *Rp 1.500*
-"
-        "🎬 3 video = *Rp 4.500*
-"
-        "🎬 5 video = *Rp 7.500*
-"
-        "🎬 10 video = *Rp 15.000*
-
-"
-        "✨ Teknologi Kling Motion Control
-"
-        "⚡ Proses cepat & hasil berkualitas!
-
-"
-        "Mau order? Klik tombol di bawah! 👇"
+        "💰 *Daftar Harga*\n\n"
+        "🎬 1 video = *Rp 1.500*\n"
+        "🎬 3 video = *Rp 4.500*\n"
+        "🎬 5 video = *Rp 7.500*\n"
+        "🎬 10 video = *Rp 15.000*\n\n"
+        "Teknologi Kling Motion Control\n"
+        "Proses cepat dan hasil berkualitas!\n\n"
+        "Mau order? Klik tombol di bawah!"
     )
     keyboard = [[InlineKeyboardButton("🎬 Order Sekarang", callback_data="order")]]
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
-
 async def akun_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     orders = load_orders()
@@ -372,29 +361,18 @@ async def akun_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total_bayar = sum(int(o["total"]) for o in user_orders.values())
     selesai = len([o for o in user_orders.values() if o["status"] == "selesai"])
     text = (
-        f"👤 *Informasi Akun*
-
-"
-        f"Nama: *{user.first_name}*
-"
-        f"Username: @{user.username or 'N/A'}
-"
-        f"ID: {user.id}
-
-"
-        f"📊 *Statistik Order*
-"
-        f"Total Order: *{total_order}*
-"
-        f"Total Video: *{total_video}*
-"
-        f"Order Selesai: *{selesai}*
-"
+        f"👤 *Informasi Akun*\n\n"
+        f"Nama: *{user.first_name}*\n"
+        f"Username: @{user.username or 'N/A'}\n"
+        f"ID: {user.id}\n\n"
+        f"📊 *Statistik Order*\n"
+        f"Total Order: *{total_order}*\n"
+        f"Total Video: *{total_video}*\n"
+        f"Order Selesai: *{selesai}*\n"
         f"Total Belanja: *Rp {total_bayar:,}*"
     )
     keyboard = [[InlineKeyboardButton("📋 Lihat Pesanan", callback_data="pesanan")]]
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
-
 def main():
     app = Application.builder().token(TOKEN).build()
 
