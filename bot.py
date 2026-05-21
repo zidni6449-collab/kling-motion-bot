@@ -102,11 +102,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"💳 *Pembayaran*\n\n"
             f"Order: *{qty} video*\n"
             f"Total: *Rp {total:,}*\n\n"
-            f"Transfer ke DANA:\n"
+            f"Scan QR DANA di bawah atau transfer ke:\n"
             f"📱 *{DANA_NUMBER}*\n\n"
             f"Setelah transfer, kirim *screenshot bukti bayar* ke sini! 📸"
         )
         await query.edit_message_text(text, parse_mode="Markdown")
+        await context.bot.send_photo(
+            chat_id=query.message.chat_id,
+            photo="https://i.ibb.co/B5hTzvGm/photo-6086659757784633356-y.jpg",
+            caption="📱 Scan QR DANA ini untuk bayar!"
+        )
         return TUNGGU_BAYAR
 
     elif data == "pesanan":
@@ -226,11 +231,15 @@ async def terima_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"💳 *Pembayaran*\n\n"
         f"Order: *{qty} video*\n"
         f"Total: *Rp {total:,}*\n\n"
-        f"Transfer ke DANA:\n"
+        f"Scan QR DANA di bawah atau transfer ke:\n"
         f"📱 *{DANA_NUMBER}*\n\n"
         f"Setelah transfer, kirim *screenshot bukti bayar* ke sini! 📸"
     )
     await update.message.reply_text(text, parse_mode="Markdown")
+    await update.message.reply_photo(
+        photo="https://i.ibb.co/B5hTzvGm/photo-6086659757784633356-y.jpg",
+        caption="📱 Scan QR DANA ini untuk bayar!"
+    )
     return TUNGGU_BAYAR
 
 async def terima_bukti_bayar(update: Update, context: ContextTypes.DEFAULT_TYPE):
