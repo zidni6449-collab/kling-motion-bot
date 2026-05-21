@@ -17,8 +17,7 @@ DANA_NUMBER = "085726956029"
 HARGA_VIDEO = 1500
 NAMA_BOT = "Kling Motion AI"
 
-# States
-MENU, PILIH_JUMLAH, UPLOAD_FOTO, UPLOAD_AUDIO, TUNGGU_BAYAR, KONFIRMASI_BAYAR = range(6)
+MENU, PILIH_JUMLAH, UPLOAD_FOTO, UPLOAD_AUDIO, TUNGGU_BAYAR = range(5)
 
 ORDERS_FILE = "orders.json"
 
@@ -52,8 +51,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("❓ Cara Order", callback_data="cara")],
         [InlineKeyboardButton("📞 Hubungi Admin", url="https://t.me/sedang_mengetik_sekarang")],
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
     return MENU
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -85,12 +83,25 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = (
             f"✅ *{qty} video dipilih*\n\n"
             f"Total: *Rp {total:,}*\n\n"
-            "📸 Sekarang kirim *foto/gambar* yang mau dijadikan video:\n"
-            "_Kirim foto sekarang_"
+            "📸 Kirim *foto/gambar* yang mau dijadikan video:"
         )
         keyboard = [[InlineKeyboardButton("❌ Batal", callback_data="back_menu")]]
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         return UPLOAD_FOTO
+
+    elif data == "skip_audio":
+        qty = context.user_data.get("qty", 1)
+        total = context.user_data.get("total", HARGA_VIDEO)
+        text = (
+            f"💳 *Pembayaran*\n\n"
+            f"Order: *{qty} video*\n"
+            f"Total: *Rp {total:,}*\n\n"
+            f"Transfer ke DANA:\n"
+            f"📱 *{DANA_NUMBER}*\n\n"
+            f"Setelah transfer, kirim *screenshot bukti bayar* ke sini! 📸"
+        )
+        await query.edit_message_text(text, parse_mode="Markdown")
+        return TUNGGU_BAYAR
 
     elif data == "pesanan":
         user_id = str(query.from_user.id)
@@ -103,10 +114,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for oid, o in sorted(user_orders.items(), key=lambda x: int(x[0]), reverse=True)[:10]:
                 status_emoji = {"pending": "⏳", "dibayar": "💳", "proses": "🔄", "selesai": "✅", "batal": "❌"}.get(o["status"], "❓")
                 text += f"{status_emoji} *Order #{oid}*\n"
-                text += f"   Qty: {o['qty']} video\n"
-                text += f"   Total: Rp {o['total']:,}\n"
-                text += f"   Status: {o['status'].upper()}\n"
-                text += f"   Tanggal: {o['tanggal']}\n\n"
+                text += f"   Qty: {o['qty']} video | Total: Rp {o['total']:,}\n"
+                text += f"   Status: {o['status'].upper()} | {o['tanggal']}\n\n"
         keyboard = [[InlineKeyboardButton("🔙 Kembali", callback_data="back_menu")]]
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         return MENU
@@ -120,7 +129,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "4️⃣ Kirim *audio/musik* (opsional)\n"
             "5️⃣ Transfer ke DANA kami\n"
             "6️⃣ Kirim *bukti bayar*\n"
-            "7️⃣ Tunggu video selesai dibuat\n"
+            "7️⃣ Tunggu video selesai\n"
             "8️⃣ Video dikirim ke kamu! 🎬\n\n"
             f"💰 Harga: *Rp {HARGA_VIDEO:,}/video*\n"
             f"💳 DANA: *{DANA_NUMBER}*"
@@ -144,9 +153,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         return MENU
 
-    elif data == "skip_audio":
-        return await proses_bayar(update, context)
-
     elif data.startswith("admin_selesai_"):
         order_id = data.split("_")[2]
         orders = load_orders()
@@ -154,11 +160,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             orders[order_id]["status"] = "selesai"
             save_orders(orders)
             user_id = int(orders[order_id]["user_id"])
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"✅ *Order #{order_id} Selesai!*\n\nVideo kamu sudah selesai dibuat dan akan segera dikirim! 🎬",
-                parse_mode="Markdown"
-            )
+            await context.bot.send_message(chat_id=user_id, text=f"✅ *Order #{order_id} Selesai!*\n\nVideo kamu sudah selesai! 🎬", parse_mode="Markdown")
             await query.edit_message_text(f"✅ Order #{order_id} ditandai selesai!")
         return MENU
 
@@ -169,11 +171,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             orders[order_id]["status"] = "proses"
             save_orders(orders)
             user_id = int(orders[order_id]["user_id"])
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"🔄 *Order #{order_id} Sedang Diproses!*\n\nVideo kamu sedang dibuat, mohon tunggu ya! 🎬",
-                parse_mode="Markdown"
-            )
+            await context.bot.send_message(chat_id=user_id, text=f"🔄 *Order #{order_id} Sedang Diproses!*\n\nVideo kamu sedang dibuat, mohon tunggu! 🎬", parse_mode="Markdown")
             await query.edit_message_text(f"🔄 Order #{order_id} sedang diproses!")
         return MENU
 
@@ -184,21 +182,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             orders[order_id]["status"] = "batal"
             save_orders(orders)
             user_id = int(orders[order_id]["user_id"])
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"❌ *Order #{order_id} Dibatalkan*\n\nMaaf, order kamu dibatalkan. Hubungi admin untuk info lebih lanjut.",
-                parse_mode="Markdown"
-            )
+            await context.bot.send_message(chat_id=user_id, text=f"❌ *Order #{order_id} Dibatalkan*\n\nHubungi admin untuk info lebih lanjut.", parse_mode="Markdown")
             await query.edit_message_text(f"❌ Order #{order_id} dibatalkan!")
         return MENU
 
+    return MENU
+
 async def terima_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.photo:
-        photo = update.message.photo[-1]
-        context.user_data["foto_id"] = photo.file_id
+        context.user_data["foto_id"] = update.message.photo[-1].file_id
         text = (
             "✅ *Foto diterima!*\n\n"
-            "🎵 Sekarang kirim *audio/musik* untuk videonya\n"
+            "🎵 Kirim *audio/musik* untuk videonya\n"
             "_atau klik Skip jika tidak pakai musik_"
         )
         keyboard = [[InlineKeyboardButton("⏭ Skip (tanpa musik)", callback_data="skip_audio")]]
@@ -209,31 +204,25 @@ async def terima_foto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return UPLOAD_FOTO
 
 async def terima_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.audio or update.message.voice or update.message.document:
-        if update.message.audio:
-            context.user_data["audio_id"] = update.message.audio.file_id
-        elif update.message.voice:
-            context.user_data["audio_id"] = update.message.voice.file_id
-        elif update.message.document:
-            context.user_data["audio_id"] = update.message.document.file_id
-    return await proses_bayar(update, context)
+    if update.message.audio:
+        context.user_data["audio_id"] = update.message.audio.file_id
+    elif update.message.voice:
+        context.user_data["audio_id"] = update.message.voice.file_id
+    elif update.message.document:
+        context.user_data["audio_id"] = update.message.document.file_id
 
-async def proses_bayar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     qty = context.user_data.get("qty", 1)
     total = context.user_data.get("total", HARGA_VIDEO)
     text = (
+        f"✅ *Audio diterima!*\n\n"
         f"💳 *Pembayaran*\n\n"
         f"Order: *{qty} video*\n"
         f"Total: *Rp {total:,}*\n\n"
         f"Transfer ke DANA:\n"
-        f"📱 *{DANA_NUMBER}*\n"
-        f"_(a.n. Kling Motion AI)_\n\n"
-        f"Setelah transfer, kirim *screenshot bukti bayar* ke sini ya! 📸"
+        f"📱 *{DANA_NUMBER}*\n\n"
+        f"Setelah transfer, kirim *screenshot bukti bayar* ke sini! 📸"
     )
-    if hasattr(update, 'callback_query') and update.callback_query:
-        await update.callback_query.edit_message_text(text, parse_mode="Markdown")
-    else:
-        await update.message.reply_text(text, parse_mode="Markdown")
+    await update.message.reply_text(text, parse_mode="Markdown")
     return TUNGGU_BAYAR
 
 async def terima_bukti_bayar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -266,11 +255,10 @@ async def terima_bukti_bayar(update: Update, context: ContextTypes.DEFAULT_TYPE)
         f"✅ *Bukti bayar diterima!*\n\n"
         f"Order ID: *#{order_id}*\n"
         f"Status: *Menunggu konfirmasi admin*\n\n"
-        f"Kami akan segera memproses pesanan kamu! 🎬",
+        f"Video akan segera diproses! 🎬",
         parse_mode="Markdown"
     )
 
-    # Notif ke admin
     bukti_id = update.message.photo[-1].file_id if update.message.photo else update.message.document.file_id
     caption = (
         f"🔔 *ORDER BARU #{order_id}*\n\n"
@@ -282,32 +270,17 @@ async def terima_bukti_bayar(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
     keyboard = [
         [
-            InlineKeyboardButton("✅ Selesai", callback_data=f"admin_selesai_{order_id}"),
             InlineKeyboardButton("🔄 Proses", callback_data=f"admin_proses_{order_id}"),
+            InlineKeyboardButton("✅ Selesai", callback_data=f"admin_selesai_{order_id}"),
         ],
         [InlineKeyboardButton("❌ Batal", callback_data=f"admin_batal_{order_id}")]
     ]
-    await context.bot.send_photo(
-        chat_id=ADMIN_ID,
-        photo=bukti_id,
-        caption=caption,
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+    await context.bot.send_photo(chat_id=ADMIN_ID, photo=bukti_id, caption=caption, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # Kirim foto order ke admin
     if foto_id:
-        await context.bot.send_photo(
-            chat_id=ADMIN_ID,
-            photo=foto_id,
-            caption=f"📸 Foto untuk Order #{order_id}"
-        )
+        await context.bot.send_photo(chat_id=ADMIN_ID, photo=foto_id, caption=f"📸 Foto untuk Order #{order_id}")
     if audio_id:
-        await context.bot.send_document(
-            chat_id=ADMIN_ID,
-            document=audio_id,
-            caption=f"🎵 Audio untuk Order #{order_id}"
-        )
+        await context.bot.send_document(chat_id=ADMIN_ID, document=audio_id, caption=f"🎵 Audio untuk Order #{order_id}")
 
     context.user_data.clear()
     return MENU
@@ -325,22 +298,11 @@ async def admin_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += f"{status_emoji} #{oid} | {o['nama']} | {o['qty']}vid | Rp{o['total']:,} | {o['status']}\n"
     await update.message.reply_text(text, parse_mode="Markdown")
 
-async def kirim_video_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_ID:
-        return
-    await update.message.reply_text(
-        "📤 *Kirim Video ke Pembeli*\n\n"
-        "Format: Reply video dengan caption:\n"
-        "`/kirim ORDER_ID`\n\n"
-        "Contoh: `/kirim 5`",
-        parse_mode="Markdown"
-    )
-
 async def kirim_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
     if not context.args:
-        await update.message.reply_text("Format: /kirim ORDER_ID")
+        await update.message.reply_text("Format: /kirim ORDER_ID\nContoh: /kirim 5")
         return
     order_id = context.args[0]
     orders = load_orders()
@@ -348,17 +310,13 @@ async def kirim_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Order #{order_id} tidak ditemukan!")
         return
     if not update.message.reply_to_message:
-        await update.message.reply_text("Reply ke video yang mau dikirim!")
+        await update.message.reply_text("Reply ke video yang mau dikirim dulu!")
         return
 
     user_id = int(orders[order_id]["user_id"])
     reply_msg = update.message.reply_to_message
 
-    await context.bot.send_message(
-        chat_id=user_id,
-        text=f"🎬 *Video Order #{order_id} Sudah Selesai!*\n\nBerikut video pesanan kamu:",
-        parse_mode="Markdown"
-    )
+    await context.bot.send_message(chat_id=user_id, text=f"🎬 *Video Order #{order_id} Sudah Selesai!*\n\nBerikut video pesanan kamu:", parse_mode="Markdown")
 
     if reply_msg.video:
         await context.bot.send_video(chat_id=user_id, video=reply_msg.video.file_id)
@@ -374,7 +332,7 @@ async def kirim_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(TOKEN).build()
 
-    conv_handler = ConversationHandler(
+    conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             MENU: [CallbackQueryHandler(button_handler)],
@@ -396,13 +354,13 @@ def main():
         per_message=False,
     )
 
-    app.add_handler(conv_handler)
+    app.add_handler(conv)
     app.add_handler(CommandHandler("orders", admin_orders))
     app.add_handler(CommandHandler("kirim", kirim_video))
     app.add_handler(CallbackQueryHandler(button_handler))
 
     print(f"✅ Bot {NAMA_BOT} berjalan...")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
