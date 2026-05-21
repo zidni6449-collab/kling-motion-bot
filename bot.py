@@ -2,7 +2,7 @@ import logging
 import json
 import os
 from datetime import datetime
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, CallbackQueryHandler,
     ContextTypes, filters, ConversationHandler
@@ -51,7 +51,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("❓ Cara Order", callback_data="cara")],
         [InlineKeyboardButton("📞 Hubungi Admin", url="https://t.me/sedang_mengetik_sekarang")],
     ]
+    bottom_keyboard = ReplyKeyboardMarkup(
+        [[KeyboardButton("🚀 Start"), KeyboardButton("💰 Pricing"), KeyboardButton("👤 Akun")]],
+        resize_keyboard=True, persistent=True
+    )
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("Gunakan tombol di bawah untuk navigasi cepat! 👇", reply_markup=bottom_keyboard)
     return MENU
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -334,6 +339,62 @@ async def kirim_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_orders(orders)
     await update.message.reply_text(f"✅ Video Order #{order_id} berhasil dikirim ke pembeli!")
 
+async def pricing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = (
+        "💰 *Daftar Harga*
+
+"
+        "🎬 1 video = *Rp 1.500*
+"
+        "🎬 3 video = *Rp 4.500*
+"
+        "🎬 5 video = *Rp 7.500*
+"
+        "🎬 10 video = *Rp 15.000*
+
+"
+        "✨ Teknologi Kling Motion Control
+"
+        "⚡ Proses cepat & hasil berkualitas!
+
+"
+        "Mau order? Klik tombol di bawah! 👇"
+    )
+    keyboard = [[InlineKeyboardButton("🎬 Order Sekarang", callback_data="order")]]
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+
+async def akun_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    orders = load_orders()
+    user_orders = {k: v for k, v in orders.items() if v["user_id"] == str(user.id)}
+    total_order = len(user_orders)
+    total_video = sum(int(o["qty"]) for o in user_orders.values())
+    total_bayar = sum(int(o["total"]) for o in user_orders.values())
+    selesai = len([o for o in user_orders.values() if o["status"] == "selesai"])
+    text = (
+        f"👤 *Informasi Akun*
+
+"
+        f"Nama: *{user.first_name}*
+"
+        f"Username: @{user.username or 'N/A'}
+"
+        f"ID: {user.id}
+
+"
+        f"📊 *Statistik Order*
+"
+        f"Total Order: *{total_order}*
+"
+        f"Total Video: *{total_video}*
+"
+        f"Order Selesai: *{selesai}*
+"
+        f"Total Belanja: *Rp {total_bayar:,}*"
+    )
+    keyboard = [[InlineKeyboardButton("📋 Lihat Pesanan", callback_data="pesanan")]]
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+
 def main():
     app = Application.builder().token(TOKEN).build()
 
@@ -360,6 +421,9 @@ def main():
     )
 
     app.add_handler(conv)
+    app.add_handler(MessageHandler(filters.Regex("^🚀 Start$"), start))
+    app.add_handler(MessageHandler(filters.Regex("^💰 Pricing$"), pricing_handler))
+    app.add_handler(MessageHandler(filters.Regex("^👤 Akun$"), akun_handler))
     app.add_handler(CommandHandler("orders", admin_orders))
     app.add_handler(CommandHandler("kirim", kirim_video))
     app.add_handler(CallbackQueryHandler(button_handler))
